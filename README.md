@@ -37,11 +37,9 @@ curl -s https://raw.githubusercontent.com/pzyyll/lexi-navigator-server/main/tool
 - Fask应用和reCaptcha的密钥配置：app_data/conf/flask_config.py
 
     ```
-    ...
     SECRET_KEY = 'random key: openssl rand -hex 32'
     RECAPTCHA_PUBLIC_KEY = "google-recaptcha-public-key"
     RECAPTCHA_PRIVATE_KEY = "oogle-recaptcha-private-key"
-    ...
     ```
 
 # 配置Nginx【可选】
