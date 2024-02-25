@@ -15,5 +15,5 @@ PROJECT_DIR=. ./tools/deploy.sh init-pyenv
 
 ```
 PROJECT_DIR=. ./tools/deploy.sh init-nginx-conf
-# 安装提示自动生成配置
+# 按照提示自动生成配置
 ```
