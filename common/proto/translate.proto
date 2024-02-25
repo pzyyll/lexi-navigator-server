@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package translate;
+
+message DetectLanguage {
+    string language_code = 1;
+    optional float confidence = 2;
+}
+
+message TranslatedText {
+    string translated_text = 1;
+    optional string detected_language_code = 2;
+}
+
+message Language {
+    string language_code = 1;
+    optional string display_name = 2;
+}
+
+message SupportedLanguages {
+    repeated Language languages = 1;
+}
+
+message TranslateTextData {
+    string text = 1;
+    optional string source_lang_code = 2;
+    optional string target_lang_code = 3;
+    optional string api_type = 4;
+}
+
+message TranslateTextRequest {
+    string user = 1;
+    string token = 2;
+    TranslateTextData data = 3;
+}
+
+message TranslateTextResponse {
+    int64 code = 1;
+    TranslatedText result = 2;
+    optional string from_api_type = 3;  // The API that was used to translate the text
+    optional string msg = 4;  // Error message
+}

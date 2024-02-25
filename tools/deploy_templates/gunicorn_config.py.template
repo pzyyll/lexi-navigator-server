@@ -1,0 +1,60 @@
+# -*- coding:utf-8 -*-
+# @Date: "2024-02-18"
+# @Description: gunicorn config
+
+# Server Socket
+# 绑定的地址，可以是 Unix 套接字或者 IP 地址和端口号
+# bind = 'unix:/path/to/yourapp.sock'  # Unix 套接字例子
+# bind = '0.0.0.0:8000'  # 或者绑定到 IP 和端口
+bind = '{{BIND}}'
+
+# Worker Processes
+# 工作进程的类型，同步模式是默认的，还有 gevent, uvicorn.workers.UvicornWorker 等异步模式
+worker_class = 'sync'
+# 工作进程的数量，通常设置为 CPU 核心数的 2-4 倍
+workers = 2
+# 对于异步工作模式，设置每个工作进程的最大并发请求数
+worker_connections = 1000
+# 主进程的最大寿命，超过这个时间就会重启，有助于防止内存泄漏
+max_requests = 1200
+# 在处理完 max_requests 个请求后，工作进程会在 [0, max_requests_jitter] 的范围内随机重启
+max_requests_jitter = 50
+
+# Logging
+# 日志等级，可选的有 debug, info, warning, error, critical
+loglevel = 'info'
+# 访问日志文件的路径，使用 '-' 表示标准输出
+accesslog = '{{LOG_PATH}}/access.log'
+# 错误日志文件的路径，使用 '-' 表示标准输出
+errorlog = '{{LOG_PATH}}/error.log'
+# 访问日志的格式
+access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
+
+# Security
+# 设置 umask，默认为 0，表示不掩盖任何权限
+umask = 0o007
+# 设置临时文件的存放目录
+# worker_tmp_dir = '/dev/shm'
+
+# Performance
+# 在 keep-alive 连接上等待下一个请求的秒数，默认为 2 秒
+keepalive = 2
+# 转发请求头的限制大小，默认值 8190
+limit_request_line = 4094
+# 请求头的数量限制，默认为 100
+limit_request_fields = 100
+# 请求头的总大小限制，默认为 8190 字节
+limit_request_field_size = 8190
+
+# Debugging
+# 如果为 True，当一个工作进程接收到 SIGABRT 信号时，会打印当前的堆栈跟踪，仅用于调试
+# print_stacktrace_on_sigabrt = True
+
+# Server Mechanics
+# 在后台运行
+daemon = False
+# 设置进程的用户名和用户组
+# user = 'www-data'
+# group = 'www-data'
+# 设置进程的工作目录
+# chdir = '/path/to/your/app'

@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve my TS-Server Flask app
+After=network.target
+
+[Service]
+User={{USER}}
+Group={{GROUP}}
+WorkingDirectory={{WORKING_DIR}}
+Environment="PATH={{ENV_BIN_DIR}}"
+ExecStart={{GUNI_BIN}} -c {{GUNI_CONFIG}} run:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

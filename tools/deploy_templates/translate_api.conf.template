@@ -1,0 +1,10 @@
+{
+    "google": {
+        "project_id": "your_project_id",
+        "auth_key": "path/to/your/google_auth_key.json"
+    },
+    "baidu": {
+        "app_id": "your_app_id",
+        "auth_key": "your_auth_key"
+    }
+}
