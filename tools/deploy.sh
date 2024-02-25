@@ -7,7 +7,7 @@ GROUP=$(id -g -n $USER)
 SCRIPT_SOURCE_URL="https://raw.githubusercontent.com/pzyyll/lexi-navigator-server/main/tools/deploy.sh"
 PROJECT_REPOS="https://github.com/pzyyll/lexi-navigator-server.git"
 CURRENT_DIR="$(pwd)"
-USER_EVN_FILE="~/.lexin-env"
+USER_ENV_FILE="~/.lexin-env"
 PYTHON_CMD="python"
 
 TEMP_DIR=$(mktemp -d)
@@ -217,7 +217,7 @@ check_git() {
 
 
 initialize_variables() {
-    if [ ! "${PROJECT_DIR:-}" ]; then
+    if [ -z "${PROJECT_DIR}" ]; then
         PROJECT_DIR="$CURRENT_DIR/$PROJECT_NAME"
     fi
 
@@ -356,6 +356,8 @@ init() {
     git submodule update --recursive
 
     init_pyenv
+
+    echo "$PROJECT_DIR" > $USER_EVN_FILE
 }
 
 
@@ -667,8 +669,8 @@ trap exit_cleanup EXIT
 trap sig_cleanup SIGINT SIGTERM
 
 
-if [ -f $USER_EVN_FILE ]; then
-    source $USER_EVN_FILE
+if [ -f $USER_ENV_FILE ] && [ -z "${PROJECT_DIR}" ]; then
+    source $USER_ENV_FILE
 fi
 
 check_git
