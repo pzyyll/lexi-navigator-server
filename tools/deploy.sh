@@ -7,7 +7,7 @@ GROUP=$(id -g -n $USER)
 SCRIPT_SOURCE_URL="https://raw.githubusercontent.com/pzyyll/lexi-navigator-server/main/tools/deploy.sh"
 PROJECT_REPOS="https://github.com/pzyyll/lexi-navigator-server.git"
 CURRENT_DIR="$(pwd)"
-USER_ENV_FILE="~/.lexin-env"
+USER_ENV_FILE="$HOME/.lexin-env"
 PYTHON_CMD="python"
 
 TEMP_DIR=$(mktemp -d)
