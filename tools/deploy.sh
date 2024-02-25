@@ -623,6 +623,7 @@ init_nginx_conf() {
                     echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
                     ;;
             esac
+        done
     fi
 
     if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
