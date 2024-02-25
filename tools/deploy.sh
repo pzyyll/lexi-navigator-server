@@ -79,6 +79,34 @@ mk_dir() {
 }
 
 
+add_env_var() {
+    local file=$1
+    local var_name=$2
+    local var_value=$3
+
+    # 检查文件是否存在
+    if [ ! -f "$file" ]; then
+        echo "文件不存在: $file"
+        return 1
+    fi
+
+    # 检查变量是否已存在
+    if grep -q "^export $var_name=" "$file"; then
+        # 变量存在，更新其值
+        sed -i "/^export $var_name=/c\export $var_name=\"$var_value\"" "$file"
+    else
+        # 变量不存在，添加到文件末尾
+        echo "export $var_name=\"$var_value\"" >> "$file"
+    fi
+}
+
+add_env_to_userfile() {
+    if [ ! -f $USER_ENV_FILE ]; then
+        touch $USER_ENV_FILE
+    fi
+    add_env_var $USER_ENV_FILE $1 $2
+}
+
 local_mkdir() {
     # log the first not exist dir
     local dir="$1"
@@ -357,7 +385,7 @@ init() {
 
     init_pyenv
 
-    echo "$PROJECT_DIR" > $USER_EVN_FILE
+    add_env_to_userfile "PROJECT_DIR" "$PROJECT_DIR"
 }
 
 
@@ -494,6 +522,8 @@ init_systemd_service() {
         -e "s|{{GUNI_BIN}}|$GUNI_BIN|g" \
         -e "s|{{GUNI_CONFIG}}|$GUNI_CONFIG_FILE|g" \
         $SERVICE_TEMPLATE | sudo tee $SERVICE_FILE > /dev/null
+
+    sudo systemctl daemon-reload
 }
 
 
@@ -501,10 +531,41 @@ uninstall_service() {
     if [ ! -d "/run/systemd/system" ]; then
         color_echo "Systemd not support." red
     fi
+    if [ ! -f $SERVICE_FILE ]; then
+        color_echo "Service file not found: $(color_echo $SERVICE_FILE red)" red
+        return 1
+    fi
     sudo systemctl stop $SERVICE_NAME
     sudo systemctl disable $SERVICE_NAME
     sudo rm -f $SERVICE_FILE
     sudo systemctl daemon-reload
+}
+
+
+uninstall() {
+    while true; do
+        read -p "Remove: ${PROJECT_DIR}? $(color_echo "[yes/no]" yellow italic): " answer
+        case $answer in
+            [Yy][Ee][Ss])
+                break
+                ;;
+            [Nn][Oo])
+                exit_status 1
+                ;;
+            *)
+                echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
+                ;;
+        esac
+    done
+
+    uninstall_service
+    if [ -d $APP_DATA ]; then
+        sudo rm -rf $APP_DATA
+    fi
+    if [ -z "${NGINX_CONFIG_FILE}" ] && [ -f $NGINX_CONFIG_FILE ]; then
+        sudo rm -rf $GUNI_CONFIG_FILE
+    fi
+    sudo rm -rf $PROJECT_DIR
 }
 
 
@@ -546,6 +607,24 @@ init_nginx_conf() {
         color_echo "Nginx not installed!!!" red
         exit_status 1
     fi
+
+    if [ -z "${NGINX_CONFIG_FILE}" ] && [ -f "$NGINX_CONFIG_FILE" ]; then
+        color_echo "Nginx config file already exists: $(color_echo $NGINX_CONFIG_FILE green underline)"
+        while true; do
+            read -p "Do you want to overwrite it? $(color_echo "[yes/no]" yellow italic): " answer
+            case $answer in
+                [Yy][Ee][Ss])
+                    break
+                    ;;
+                [Nn][Oo])
+                    exit_status 1
+                    ;;
+                *)
+                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
+                    ;;
+            esac
+    fi
+
     if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
         NGINX_CONFIG_FILE="$NGINX_CONFIG_DIR/sites-available/$NGINX_CONFIG_NAME"
     elif [ -d "$NGINX_CONFIG_DIR/conf.d" ]; then
@@ -570,6 +649,8 @@ init_nginx_conf() {
 
     echo "Run $(color_echo "'sudo systemctl reload nginx'" red) to apply changes."
     echo "Additional modifications are in the file: $(color_echo "$NGINX_CONFIG_FILE" green)"
+
+    add_env_to_userfile "NGINX_CONFIG_FILE" "$NGINX_CONFIG_FILE"
 }
 
 
@@ -617,6 +698,7 @@ init_pyenv() {
     python -m pip install -r $DEPS_REQUIREMENTS_FILE
 }
 
+
 service() {
     if [ "$1" == "start" ]; then
         systemctl start $SERVICE_NAME
@@ -635,17 +717,16 @@ service() {
 
 
 help() {
-    echo "Usage: $0 {init|init-conf-noservice|install-service|uninstall-service|service|up-source|init-pyenv|test-run|update|init-nginx-conf}"
-    echo "init: Initialize the project and install the service."
-    echo "init-conf-noservice: Initialize the project without installing the service."
+    echo "Usage: $0 {init|install-service|uninstall-service|service|up-source|init-pyenv|update|init-nginx-conf|uninstall}"
+    echo "init: Initialize the project directory and install the service."
     echo "install-service: Install the service."
     echo "uninstall-service: Uninstall the service."
-    echo "service: Start, stop, restart, status, or reload the service."
+    echo "service: Start, stop, restart, or check the status of the service."
     echo "up-source: Update the project source code."
     echo "init-pyenv: Initialize the python environment."
-    echo "test-run: Run the project in debug mode."
     echo "update: Update the script."
     echo "init-nginx-conf: Initialize the nginx configuration."
+    echo "uninstall: Uninstall the project."
 }
 
 
@@ -713,6 +794,9 @@ case $1 in
         ;;
     "init-nginx-conf")
         init_nginx_conf
+        ;;
+    "uninstall")
+        uninstall
         ;;
     *)
         help
