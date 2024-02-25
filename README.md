@@ -1,19 +1,10 @@
 # LexiNavigator Server
 
-# 启动脚本
+# Startup script
 
 ```shell
-
-# 初始化运行环境
-PROJECT_DIR=. ./tools/deploy.sh init-pyenv
-
-# Linux
-./tools/guni_service.sh {start|stop|restart}
-```
-
-# 配置Nginx【可选】
-
-```
-PROJECT_DIR=. ./tools/deploy.sh init-nginx-conf
-# 按照提示自动生成配置
+SECRET_KEY = 'randomkey：openssl rand -hex 32'
+RECAPTCHA_PUBLIC_KEY = "google-recaptcha-public-key"
+RECAPTCHA_PRIVATE_KEY = "oogle-recaptcha-private-key"
+...
 ```
