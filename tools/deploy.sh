@@ -101,10 +101,10 @@ add_env_var() {
 }
 
 add_env_to_userfile() {
-    if [ ! -f $USER_ENV_FILE ]; then
-        touch $USER_ENV_FILE
+    if [ ! -f "$USER_ENV_FILE" ]; then
+        touch "$USER_ENV_FILE"
     fi
-    add_env_var $USER_ENV_FILE $1 $2
+    add_env_var "$USER_ENV_FILE" $1 $2
 }
 
 local_mkdir() {
