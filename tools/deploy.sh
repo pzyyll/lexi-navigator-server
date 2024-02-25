@@ -433,17 +433,17 @@ init_gunicorn_config() {
 
 
 init_flask_config() {
+    local create_flag=true
     if [ -f $FLASK_CONFIG_FILE ]; then
         while true; do
             read -p "Flask config file $(color_echo "$FLASK_CONFIG_FILE" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
             case $answer in
                 [Yy][Ee][Ss])
-                    sed -e "s|{{DB_PATH}}|$DEFAULT_DB_DIR|g" \
-                        $FLASK_CONFIG_FILE_TEMPLATE | tee $FLASK_CONFIG_FILE > /dev/null
                     break
                     ;;
                 [Nn][Oo])
-                    return 1
+                    create_flag=false
+                    break
                     ;;
                 *)
                     echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
@@ -451,16 +451,21 @@ init_flask_config() {
             esac
         done
     fi
+    if [ $create_flag ]; then
+        sed -e "s|{{DB_PATH}}|$DEFAULT_DB_DIR|g" \
+            $FLASK_CONFIG_FILE_TEMPLATE | tee $FLASK_CONFIG_FILE > /dev/null
+    fi
 
+    create_flag=true
     if [ -f $TRANSLATE_CONFIG_FILE ]; then
         while true; do
             read -p "Translate config file $(color_echo "$TRANSLATE_CONFIG_FILE" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
             case $answer in
                 [Yy][Ee][Ss])
-                    cp -f $TRANSLATE_CONFIG_TEMPLATE $TRANSLATE_CONFIG_FILE
                     break
                     ;;
                 [Nn][Oo])
+                    create_flag=false
                     break
                     ;;
                 *)
@@ -469,31 +474,36 @@ init_flask_config() {
             esac
         done
     fi
+    if [ $create_flag ]; then
+        cp -f $TRANSLATE_CONFIG_TEMPLATE $TRANSLATE_CONFIG_FILE
+    fi
     
-
+    create_flag=true
     local flaskenv="$WORK_DIR/.flaskenv"
     if [ -f $flaskenv ]; then
         while true; do
             read -p "Flask env file $(color_echo "$flaskenv" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
             case $answer in
                 [Yy][Ee][Ss])
-                    color_echo "Flask env file: $(color_echo "$flaskenv" green)"
-                    sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
-                        -e "s|{{APP_DATA_PATH}}|$APP_DATA_PATH|g" \
-                        -e "s|{{FLASK_APP_CONFIG}}|$FLASK_CONFIG_FILE|g" \
-                        -e "s|{{TRANSLATE_API_CONFIG}}|$TRANSLATE_CONFIG_FILE|g" \
-                        $FLASK_ENV_TEMPLATE | tee $flaskenv > /dev/null
-
                     break
                     ;;
                 [Nn][Oo])
-                    return 1
+                    create_flag=false
+                    break
                     ;;
                 *)
                     echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
                     ;;
             esac
         done
+    fi
+    if [ $create_flag ]; then
+        color_echo "Flask env file: $(color_echo "$flaskenv" green)"
+        sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
+            -e "s|{{APP_DATA_PATH}}|$APP_DATA_PATH|g" \
+            -e "s|{{FLASK_APP_CONFIG}}|$FLASK_CONFIG_FILE|g" \
+            -e "s|{{TRANSLATE_API_CONFIG}}|$TRANSLATE_CONFIG_FILE|g" \
+            $FLASK_ENV_TEMPLATE | tee $flaskenv > /dev/null
     fi
 }
 
