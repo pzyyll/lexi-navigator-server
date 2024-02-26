@@ -12,6 +12,7 @@ PYTHON_CMD="python"
 
 TEMP_DIR=$(mktemp -d)
 TEMP_MK_FILE_LOG="$TEMP_DIR/mk_files.log"
+echo "Temp dir: $TEMP_DIR"
 
 
 exit_status() {
@@ -93,7 +94,11 @@ add_env_var() {
     # 检查变量是否已存在
     if grep -q "^export $var_name=" "$file"; then
         # 变量存在，更新其值
-        sed -i "/^export $var_name=/c\export $var_name=\"$var_value\"" "$file"
+        local tmp_file="$TEMP_DIR/$(basename $file)"
+        sed -e "/^export $var_name=/c\
+        export $var_name=\"$var_value\""\
+         "$file" > $tmp_file
+        mv -f $tmp_file $file
     else
         # 变量不存在，添加到文件末尾
         echo "export $var_name=\"$var_value\"" >> "$file"
@@ -105,10 +110,10 @@ prompt_yes_or_no() {
         read -p "$1 $(color_echo "[yes/no]" yellow italic): " answer
         case $answer in
             [Yy][Ee][Ss])
-                return 1
+                return 0
                 ;;
             [Nn][Oo])
-                return 0
+                return 1
                 ;;
             *)
                 echo "Invalid input. Enter 'yes' or 'no'."
@@ -123,7 +128,7 @@ prompt_overwrite() {
         prompt_yes_or_no "$(color_echo $file_path green) already exists. Overwrite?"
         return $?
     fi
-    return 1  # 如果文件不存在，也返回1表示可以创建
+    return 0  # 如果文件不存在，也表示可以创建
 }
 
 
@@ -213,7 +218,7 @@ check_git() {
     # 检查 Git 是否已安装
     if ! command -v git &> /dev/null
     then
-        if ! prompt_yes_or_no "是Git 未安装。是否尝试安装？"; then
+        if ! prompt_yes_or_no "Git 未安装。是否尝试安装？"; then
             echo "See you next time! :)"
             exit_status 1
         fi
@@ -266,11 +271,14 @@ check_git() {
 
 
 initialize_variables() {
-    if [ -z "${PROJECT_DIR}" ]; then
+    if [ -z "${PROJECT_DIR:-}" ]; then
         PROJECT_DIR="$CURRENT_DIR/$PROJECT_NAME"
     fi
 
-    PROJECT_DIR=$(realpath "$PROJECT_DIR")
+    if [ -d "$PROJECT_DIR" ]; then
+        PROJECT_DIR=$(realpath "$PROJECT_DIR")
+    fi
+    
     WORK_DIR="$PROJECT_DIR"
     TOOLS_DIR="$WORK_DIR/tools"
     DEPS_REQUIREMENTS_FILE="$TOOLS_DIR/requirements.txt"
@@ -359,7 +367,6 @@ init() {
     PROJECT_DIR="$PROJECT_ROOT_DIR/$PROJECT_NAME"
     if [ -d $PROJECT_DIR ]; then
         echo "Project directory $(color_echo $PROJECT_DIR green underline) already exists. "
-        prompt_yes_or_no "Do you want to $(color_echo "remove" red) it and re-initialize?"
         if prompt_yes_or_no "Do you want to $(color_echo "remove" red) it and re-initialize?"; then
             sudo rm -rf $PROJECT_DIR
         else
@@ -372,9 +379,9 @@ init() {
     echo "项目将会在以下路径创建：$(color_echo "$PROJECT_DIR" green)"
     # git clone --no-checkout $PROJECT_REPOS $PROJECT_DIR || exit_status 1
     echo "$PROJECT_DIR" >> "$TEMP_MK_FILE_LOG"
-    git clone $PROJECT_REPOS $PROJECT_DIR
+    git clone $PROJECT_REPOS $PROJECT_DIR || exit_status 1
 
-    cd $PROJECT_DIR
+    cd $PROJECT_DIR || exit_status 1
 
     # git sparse-checkout init
     # git sparse-checkout set ts_server/ ts_common/ .gitmodules
@@ -383,10 +390,10 @@ init() {
     # git read-tree -mu HEAD
 
     # 更新依赖的子模块
-    git submodule init
+    git submodule init || exit_status 1
     # 替换掉 ssh 成 https
     git submodule set-url libs/pyhelper https://github.com/pzyyll/python_common.git
-    git submodule update --recursive
+    git submodule update --recursive || exit_status 1
 
     init_pyenv
 
@@ -597,14 +604,16 @@ init_pyenv() {
     cd $WORK_DIR || exit_status 1
 
     color_echo "Start installing python venv ..."
+    init_venv=true
     if [ -d .venv ]; then
-        if prompt_yes_or_no "The python venv already exists. Remove and re-initialize?"; then
-            $PYTHON_CMD -m pip install --upgrade pip || exit_status 1
-            $PYTHON_CMD -m pip install virtualenv --user
-            $PYTHON_CMD -m venv .venv --clear
-        else
-            return 1
+        if ! prompt_yes_or_no "The python venv already exists. Remove and re-initialize?"; then
+            init_venv=false
         fi
+    fi
+    if [ "$init_venv" == "true" ]; then
+        $PYTHON_CMD -m pip install --upgrade pip || exit_status 1
+        $PYTHON_CMD -m pip install virtualenv --user
+        $PYTHON_CMD -m venv .venv
     fi
 
     color_echo "Start installing python deps ..." yellow
@@ -649,6 +658,7 @@ exit_cleanup() {
     # 只在 EXIT_STATUS 非零且 TEMP_MK_FILE_LOG 文件存在时执行清理
     if [[ $EXIT_STATUS -ne 0 ]] && [[ -f $TEMP_MK_FILE_LOG ]]; then
         # 读取 TEMP_MK_FILE_LOG 文件中的每个条目并删除
+        echo "Cleaning up..."
         cat $TEMP_MK_FILE_LOG
         xargs -I {} sudo rm -rf {} < $TEMP_MK_FILE_LOG
     fi
