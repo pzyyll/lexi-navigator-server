@@ -649,10 +649,12 @@ service() {
 init_socks(){
     sock_file="$APP_DATA/${PROJECT_NAME}.sock"
     sock_url="unix:$sock_file"
-    sed -i'' -e "s/bind\s*=\s*\"[^\"]*\"/bind = \"${sock_file}\"/g" $GUNI_CONFIG_FILE
-    color_echo "Set nginx proxy_pass to $sock_url : $NGINX_CONFIG_FILE" yellow
-    sed -i'' -e "s|\(proxy_pass\s*\).*;|\1http://${sock_file};|" $NGINX_CONFIG_FILE
+    color_echo "Set guni conf bind to $sock_url : $GUNI_CONFIG_FILE"
+    sudo sed -i'' -e "s|^bind.*|bind = \"${sock_url}\"|g" $GUNI_CONFIG_FILE
+    color_echo "Set nginx proxy_pass to $sock_url : $NGINX_CONFIG_FILE"
+    sudo sed -i'' -e "s|\(proxy_pass\).*;|\1 http://${sock_url};|g" $NGINX_CONFIG_FILE
 }
+
 
 
 help() {
