@@ -272,7 +272,12 @@ check_git() {
 
 initialize_variables() {
     if [ -z "${PROJECT_DIR:-}" ]; then
-        PROJECT_DIR="$CURRENT_DIR/$PROJECT_NAME"
+        if [ -z "${PROJECT_DIR_ENV:-}" ]; then
+            # 如果环境变量文件中没有设置项目路径，则使用当前目录
+            PROJECT_DIR="${CURRENT_DIR}/${PROJECT_NAME}"
+        else
+            PROJECT_DIR="$PROJECT_DIR_ENV"
+        fi
     fi
 
     if [ -d "$PROJECT_DIR" ]; then
@@ -397,7 +402,7 @@ init() {
 
     init_pyenv
 
-    add_env_to_userfile "PROJECT_DIR" "$PROJECT_DIR"
+    add_env_to_userfile "PROJECT_DIR_ENV" "$PROJECT_DIR"
 }
 
 
@@ -508,6 +513,7 @@ uninstall() {
         sudo rm -rf $GUNI_CONFIG_FILE
     fi
     sudo rm -rf $PROJECT_DIR
+    sudo rm -rf $USER_ENV_FILE
 }
 
 
@@ -675,7 +681,7 @@ trap exit_cleanup EXIT
 trap sig_cleanup SIGINT SIGTERM
 
 
-if [ -f $USER_ENV_FILE ] && [ -z "${PROJECT_DIR}" ]; then
+if [ -f $USER_ENV_FILE ]; then
     source $USER_ENV_FILE
 fi
 
