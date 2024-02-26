@@ -1,5 +1,5 @@
 [Unit]
-Description=Gunicorn instance to serve my TS-Server Flask app
+Description=Gunicorn instance to serve my Server Flask app
 After=network.target
 
 [Service]
