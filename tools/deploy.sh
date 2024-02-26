@@ -646,6 +646,15 @@ service() {
 }
 
 
+init_socks(){
+    sock_file="$APP_DATA/${PROJECT_NAME}.sock"
+    sock_url="unix:$sock_file"
+    sed -i'' -e "s/bind\s*=\s*\"[^\"]*\"/bind = \"$sock_file\"/g" $GUNI_CONFIG_FILE
+    color_echo "Set nginx proxy_pass to $sock_url : $NGINX_CONFIG_FILE" yellow"
+    sed -i'' -e "s|\(proxy_pass\s*\).*;|\1http://${sock_url};|" $NGINX_CONFIG_FILE
+}
+
+
 help() {
     echo "Usage: $0 {init|install-service|uninstall-service|service|up-source|init-pyenv|update|init-nginx-conf|uninstall}"
     echo "init: Initialize the project directory and install the service."
@@ -719,6 +728,9 @@ case $1 in
 
         init_conf
         init_pyenv
+        ;;
+    "init-socks")
+        init_socks
         ;;
     "update")
         update_script
