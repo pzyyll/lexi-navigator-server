@@ -32,7 +32,7 @@ access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"
 
 # Security
 # 设置 umask，默认为 0，表示不掩盖任何权限
-umask = 0o007
+# umask = 0o007
 # 设置临时文件的存放目录
 # worker_tmp_dir = '/dev/shm'
 
