@@ -653,6 +653,9 @@ init_socks(){
     sudo sed -i'' -e "s|^bind.*|bind = \"${sock_url}\"|g" $GUNI_CONFIG_FILE
     color_echo "Set nginx proxy_pass to $sock_url : $NGINX_CONFIG_FILE"
     sudo sed -i'' -e "s|\(proxy_pass\).*;|\1 http://${sock_url};|g" $NGINX_CONFIG_FILE
+
+    sudo systemctl reload nginx
+    sudo systemctl restart $SERVICE_NAME
 }
 
 
