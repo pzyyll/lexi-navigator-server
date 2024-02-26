@@ -100,6 +100,33 @@ add_env_var() {
     fi
 }
 
+prompt_yes_or_no() {
+    while true; do
+        read -p "$1 $(color_echo "[yes/no]" yellow italic): " answer
+        case $answer in
+            [Yy][Ee][Ss])
+                return 1
+                ;;
+            [Nn][Oo])
+                return 0
+                ;;
+            *)
+                echo "Invalid input. Enter 'yes' or 'no'."
+                ;;
+        esac
+    done
+}
+
+prompt_overwrite() {
+    local file_path=$1
+    if [ -f "$file_path" ]; then
+        prompt_yes_or_no "$(color_echo $file_path green) already exists. Overwrite?"
+        return $?
+    fi
+    return 1  # 如果文件不存在，也返回1表示可以创建
+}
+
+
 add_env_to_userfile() {
     if [ ! -f "$USER_ENV_FILE" ]; then
         touch "$USER_ENV_FILE"
@@ -186,17 +213,11 @@ check_git() {
     # 检查 Git 是否已安装
     if ! command -v git &> /dev/null
     then
-        echo "Git 未安装。正在尝试安装 Git..."
-        read -p "Git 未安装，是否尝试安装？$(color_echo "[yes/no]" yellow italic): " answ
-        case $answ in
-            [Yy][Ee][Ss])
-                color_echo "开始安装 Git..." yellow
-                ;;
-            *)
-                color_echo "See you next time! :)" green
-                exit_status 1
-                ;;
-        esac
+        if ! prompt_yes_or_no "是Git 未安装。是否尝试安装？"; then
+            echo "See you next time! :)"
+            exit_status 1
+        fi
+        echo "正在安装 Git..."
         # 检测操作系统
         OS="$(uname -s)"
         case "${OS}" in
@@ -325,44 +346,28 @@ init() {
     PROJECT_ROOT_DIR="${project_root_path:-$CURRENT_DIR}"
 
     if [ ! -d $PROJECT_ROOT_DIR ]; then
-        read -p "The path does not exist. Do you want to create?$(color_echo "[yes/no]" yellow italic): " answ
-        case $answ in
-            [Yy][Ee][Ss])
-                local_mkdir $PROJECT_ROOT_DIR || exit_status 1
-                # 更新成绝对路径，以防输入的是个相对路径
-                # (Update to absolute path in case the input is a relative path)
-                break
-                ;;
-            *)
-                color_echo "See you next time! :)" green
-                exit_status 1
-                ;;
-        esac
+        if prompt_yes_or_no "The path does not exist. Do you want to create?";
+        then
+            local_mkdir $PROJECT_ROOT_DIR || exit_status 1
+        else
+            color_echo "See you next time! :)" green
+            exit_status 1
+        fi
     fi
 
     PROJECT_ROOT_DIR=$(realpath "$PROJECT_ROOT_DIR")
     PROJECT_DIR="$PROJECT_ROOT_DIR/$PROJECT_NAME"
     if [ -d $PROJECT_DIR ]; then
-        while true; do
-            echo "Project directory $(color_echo $PROJECT_DIR green underline) already exists. "
-            read -p "Do you want to $(color_echo "remove" red) it and re-initialize? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    echo "Remove old files...."
-                    sudo rm -rf $PROJECT_DIR
-                    break
-                    ;;
-                [Nn][Oo])
-                    exit_status 0
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
+        echo "Project directory $(color_echo $PROJECT_DIR green underline) already exists. "
+        prompt_yes_or_no "Do you want to $(color_echo "remove" red) it and re-initialize?"
+        if prompt_yes_or_no "Do you want to $(color_echo "remove" red) it and re-initialize?"; then
+            sudo rm -rf $PROJECT_DIR
+        else
+            exit_status 0
+        fi
     fi
 
-    # 重新根据 PROJECT_DIR 路径初始化相关路径
+    # 重新根据 PROJECT_DIR 路径初始化相关路径参数
     initialize_variables
     echo "项目将会在以下路径创建：$(color_echo "$PROJECT_DIR" green)"
     # git clone --no-checkout $PROJECT_REPOS $PROJECT_DIR || exit_status 1
@@ -398,21 +403,8 @@ init_default_data_path() {
 
 
 init_gunicorn_config() {
-    if [ -f $GUNI_CONFIG_FILE ]; then
-        while true; do
-            read -p "Gunicorn config file $(color_echo "$GUNI_CONFIG_FILE" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    break
-                    ;;
-                [Nn][Oo])
-                    return 1
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
+    if ! prompt_overwrite "$GUNI_CONFIG_FILE"; then
+        return 1
     fi
 
     while true; do
@@ -433,72 +425,17 @@ init_gunicorn_config() {
 
 
 init_flask_config() {
-    local create_flag=true
-    if [ -f $FLASK_CONFIG_FILE ]; then
-        while true; do
-            read -p "Flask config file $(color_echo "$FLASK_CONFIG_FILE" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    break
-                    ;;
-                [Nn][Oo])
-                    create_flag=false
-                    break
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
-    fi
-    if [ $create_flag ]; then
+    if prompt_overwrite "$FLASK_CONFIG_FILE"; then
         sed -e "s|{{DB_PATH}}|$DEFAULT_DB_DIR|g" \
             $FLASK_CONFIG_FILE_TEMPLATE | tee $FLASK_CONFIG_FILE > /dev/null
     fi
-
-    create_flag=true
-    if [ -f $TRANSLATE_CONFIG_FILE ]; then
-        while true; do
-            read -p "Translate config file $(color_echo "$TRANSLATE_CONFIG_FILE" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    break
-                    ;;
-                [Nn][Oo])
-                    create_flag=false
-                    break
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
-    fi
-    if [ $create_flag ]; then
+    
+    if prompt_overwrite "$TRANSLATE_CONFIG_FILE"; then
         cp -f $TRANSLATE_CONFIG_TEMPLATE $TRANSLATE_CONFIG_FILE
     fi
-    
-    create_flag=true
+
     local flaskenv="$WORK_DIR/.flaskenv"
-    if [ -f $flaskenv ]; then
-        while true; do
-            read -p "Flask env file $(color_echo "$flaskenv" green) already exists. Overwrite? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    break
-                    ;;
-                [Nn][Oo])
-                    create_flag=false
-                    break
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
-    fi
-    if [ $create_flag ]; then
-        color_echo "Flask env file: $(color_echo "$flaskenv" green)"
+    if prompt_overwrite $flaskenv; then
         sed -e "s|{{LOG_PATH}}|$DEFAULT_LOG_DIR|g" \
             -e "s|{{APP_DATA_PATH}}|$APP_DATA_PATH|g" \
             -e "s|{{FLASK_APP_CONFIG}}|$FLASK_CONFIG_FILE|g" \
@@ -506,7 +443,6 @@ init_flask_config() {
             $FLASK_ENV_TEMPLATE | tee $flaskenv > /dev/null
     fi
 }
-
 
 init_systemd_service() {
     if [ ! -d "/run/systemd/system" ]; then
@@ -553,20 +489,9 @@ uninstall_service() {
 
 
 uninstall() {
-    while true; do
-        read -p "Remove: ${PROJECT_DIR}? $(color_echo "[yes/no]" yellow italic): " answer
-        case $answer in
-            [Yy][Ee][Ss])
-                break
-                ;;
-            [Nn][Oo])
-                exit_status 1
-                ;;
-            *)
-                echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                ;;
-        esac
-    done
+    if ! prompt_yes_or_no "Remove: ${PROJECT_DIR}?"; then
+        exit_status 1
+    fi
 
     uninstall_service
     if [ -d $APP_DATA ]; then
@@ -618,22 +543,11 @@ init_nginx_conf() {
         exit_status 1
     fi
 
-    if [ -z "${NGINX_CONFIG_FILE}" ] && [ -f "$NGINX_CONFIG_FILE" ]; then
+    if [ -n "${NGINX_CONFIG_FILE}" ] && [ -f "$NGINX_CONFIG_FILE" ]; then
         color_echo "Nginx config file already exists: $(color_echo $NGINX_CONFIG_FILE green underline)"
-        while true; do
-            read -p "Do you want to overwrite it? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    break
-                    ;;
-                [Nn][Oo])
-                    exit_status 1
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
+        if ! prompt_overwrite "$NGINX_CONFIG_FILE"; then
+            exit_status 1
+        fi
     fi
 
     if [ -d "$NGINX_CONFIG_DIR/sites-available" ]; then
@@ -684,23 +598,13 @@ init_pyenv() {
 
     color_echo "Start installing python venv ..."
     if [ -d .venv ]; then
-        while true; do
-            read -p "The python venv already exists. Remove and re-initialize? $(color_echo "[yes/no]" yellow italic): " answer
-            case $answer in
-                [Yy][Ee][Ss])
-                    $PYTHON_CMD -m pip install --upgrade pip || exit_status 1
-                    $PYTHON_CMD -m pip install virtualenv --user
-                    $PYTHON_CMD -m venv .venv --clear
-                    break
-                    ;;
-                [Nn][Oo])
-                    return 1
-                    ;;
-                *)
-                    echo "Invalid input. Enter '$(color_echo "yes" red)' or '$(color_echo "no" red)'."
-                    ;;
-            esac
-        done
+        if prompt_yes_or_no "The python venv already exists. Remove and re-initialize?"; then
+            $PYTHON_CMD -m pip install --upgrade pip || exit_status 1
+            $PYTHON_CMD -m pip install virtualenv --user
+            $PYTHON_CMD -m venv .venv --clear
+        else
+            return 1
+        fi
     fi
 
     color_echo "Start installing python deps ..." yellow
