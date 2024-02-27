@@ -19,7 +19,7 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    return redirect(url_for('login.login', next=request.endpoint))
+    return redirect(url_for('login.login', next=url_for(request.endpoint)))
 
 
 @login_bp.route('/login', methods=['GET', 'POST'])
