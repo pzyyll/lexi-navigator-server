@@ -439,6 +439,7 @@ init_gunicorn_config() {
 init_flask_config() {
     if prompt_overwrite "$FLASK_CONFIG_FILE"; then
         sed -e "s|{{DB_PATH}}|$DEFAULT_DB_DIR|g" \
+            -e "s|{{SESSION_FILE_DIR}}|$DEFAULT_FLASK_SESSION_DIR|g" \
             $FLASK_CONFIG_FILE_TEMPLATE | tee $FLASK_CONFIG_FILE > /dev/null
     fi
     

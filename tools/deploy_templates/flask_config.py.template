@@ -10,3 +10,4 @@ RECAPTCHA_PUBLIC_KEY = "your_recaptcha_public_key"
 RECAPTCHA_PRIVATE_KEY = "your_recaptcha_private_key"
 SESSION_TYPE = 'filesystem'
 TESTING = True
+SESSION_FILE_DIR={{SESSION_FILE_DIR}}

@@ -2,7 +2,7 @@
 # @Date: "2024-02-17"
 # @Description: login
 
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user
 
 from app.forms import LoginForm
@@ -19,7 +19,7 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    return redirect(url_for('login.login'))
+    return redirect(url_for('login.login', next=request.endpoint))
 
 
 @login_bp.route('/login', methods=['GET', 'POST'])
@@ -34,8 +34,9 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.check_passwd(password):
             login_user(user)
-            flash('Login successful!', 'success')
-            return redirect(url_for('admin.index'))
+            next_page = request.args.get('next')
+            flash(f'Login successful! next: ${next_page}', 'success')
+            return redirect(next_page or url_for('index.translate'))
         else:
             flash('Invalid username or password', 'error')
     return render_template('login.html', form=form)
