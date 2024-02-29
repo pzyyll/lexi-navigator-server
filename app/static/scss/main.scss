@@ -1,0 +1,31 @@
+@import "./translate.scss";
+
+body::before {
+    content: 'xs';
+    display: none;
+}
+
+@include media-breakpoint-up(sm) {
+    body::before {
+        content: 'sm';
+    }
+}
+
+@include media-breakpoint-up(md) {
+    body::before {
+        content: 'md';
+    }
+}
+
+@include media-breakpoint-up(lg) {
+    body::before {
+        content: 'lg';
+    }
+}
+
+@include media-breakpoint-up(xl) {
+    body::before {
+        content: 'xl';
+    }
+}
+

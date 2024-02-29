@@ -1,0 +1,53 @@
+@import "../bootstrap/scss/bootstrap";
+
+.sform-control, .tform-control {
+    @extend .form-control;
+    border-radius: 0;
+    min-height: 150px;
+    max-height: 45vh;
+    height: 150px;
+    padding: 3px 6px;
+}
+
+.sform-control {
+    border: 1px solid #ced4da;
+}
+
+.sform-control:focus {
+    box-shadow: none;
+}
+
+
+.tform-control {
+    resize: none;
+    background-color: #f1f2f0;
+    border: 0px;
+}
+
+.tform-control:focus {
+    background-color: #f1f2f0;
+    box-shadow: none;
+    outline: none;
+}
+
+
+
+@include media-breakpoint-up(sm) {
+    .sform-control, .tform-control {
+        border-radius: 4px;
+        min-height: 150px;
+        max-height: 800px;
+        height: 150px;
+        resize: none;
+        padding: 6px 12px;
+    }
+    .col {
+        padding-left: 12px;
+        padding-right: 4px;
+    }
+    .col:last-child {
+        padding: auto;
+        padding-left: 4px;
+        padding-right: 12px;
+    }
+}

@@ -34,6 +34,26 @@ def get_translate_text(text, source_lang_code=None, target_lang_code=None, api_t
     return translate_text, api_type
 
 
+@index_bp.route('/translate_light', methods=['GET', 'POST'])
+@login_required
+def translate_light_request():
+    request_data = request.args
+    logger.debug('request_data: %s', request_data)
+    text = request_data.get('text', '')
+    if text and not text.isspace():
+        source_lang_code = request_data.get('sl')
+        target_lang_code = request_data.get('tl')
+        api_type = request_data.get('at', "")
+
+        translate_text, api_type = get_translate_text(text, source_lang_code, target_lang_code, api_type)
+
+        return render_template(
+            'translate_light.html',
+            source_text=text,
+            target_text=translate_text)
+    return render_template('translate_light.html')
+
+
 @index_bp.route('/translate', methods=['GET'])
 @login_required
 def translate_request():
@@ -65,6 +85,6 @@ def translate_text():
     api_type = data.get('api_type', "")
 
     translate_text, api_type = get_translate_text(text, api_type=api_type)
-    redirect_url = url_for('index.translate_request', text=text, at=api_type)
+    parameters = {'text': text, 'at': api_type}
 
-    return jsonify({'redirect_url': redirect_url, 'translate_text': translate_text, 'api_type': api_type})
+    return jsonify({'parameters': parameters, 'translate_text': translate_text, 'api_type': api_type})
