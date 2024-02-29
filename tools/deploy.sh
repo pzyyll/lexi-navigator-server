@@ -728,6 +728,10 @@ case $1 in
     "up-source")
         up_source force
         ;;
+    "sync")
+        up_source force
+        service restart
+        ;;
     "init-pyenv")
         color_echo "Start initializing python environment..."
         color_echo "Project path: $(color_echo "$PROJECT_DIR" green)"
