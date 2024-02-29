@@ -26,6 +26,7 @@ function autoResize() {
         target_text_scoll_height = target_text.scrollHeight + bottom_space;
         height = Math.max(source_text_scoll_height, target_text_scoll_height);
         height = Math.min(height, max_height);
+        height = Math.max(height, min_height);
         source_text.style.height = height + 'px';
         target_text.style.height = height + 'px';
     }
