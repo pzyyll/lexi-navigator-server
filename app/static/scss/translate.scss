@@ -3,7 +3,6 @@
 .sform-control, .tform-control {
     @extend .form-control;
     border-radius: 0;
-    min-height: 150px;
     max-height: 45vh;
     height: 150px;
     padding: 3px 6px;

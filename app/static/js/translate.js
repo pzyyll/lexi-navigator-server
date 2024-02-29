@@ -18,9 +18,10 @@ function autoResize() {
     source_text.style.height = 'auto';
     target_text.style.height = 'auto';
 
-    if (getBootstapBreakpoint() in ['xs']) {
+    if (['xs'].includes(getBootstapBreakpoint())) {
         source_text.style.height = Math.min(source_text.scrollHeight + bottom_space, max_height) + 'px';
         target_text.style.height = Math.min(target_text.scrollHeight, max_height) + 'px';
+        console.log('xs:', source_text.scrollHeight, target_text.scrollHeight)
     } else {
         source_text_scoll_height = source_text.scrollHeight + bottom_space;
         target_text_scoll_height = target_text.scrollHeight + bottom_space;
