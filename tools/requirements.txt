@@ -11,6 +11,7 @@ flask-wtf
 Flask-Session
 flask-limiter
 flask-assets
+flask_cors
 libsass
 PyJWT
 pycryptodome
