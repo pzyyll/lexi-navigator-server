@@ -10,12 +10,14 @@ from flask import request, make_response, jsonify
 
 from app.api import api
 from app.admin.auth_check import jwt_check
+from app import limiter
 
 logger = logging.getLogger(__name__)
 
 from app.translate_api import translate_api
 
 @api.route('/translate', methods=['POST'])
+@limiter.limit("2 per second")
 def handle_translate_request():
     from google.protobuf import json_format
     from common.proto.translate_pb2 import TranslateTextRequest
