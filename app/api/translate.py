@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from app.translate_api import translate_api
 
 @api.route('/translate', methods=['POST'])
-@limiter.limit("2 per second")
+@limiter.limit("5 per second")
 def handle_translate_request():
     from google.protobuf import json_format
     from common.proto.translate_pb2 import TranslateTextRequest
