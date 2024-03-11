@@ -89,6 +89,7 @@ class GoogleAPIV3(BaseTranslateAPI):
             raise ValueError("Text must be a non-empty string.")
         try:
             detected_language = detect(text)
+            logging.debug(f'detected language: {detected_language}')
             if detected_language.startswith('zh'):
                 detected_language = 'zh'
             return {'language_code': detected_language, 'confidence': 1.0}
