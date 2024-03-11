@@ -7,6 +7,8 @@ import html
 import logging
 import os
 
+from langdetect import detect
+
 from google.cloud import translate
 from .base_api import BaseTranslateAPI
 from .api_utils import simple_random_text_segments
@@ -51,8 +53,8 @@ class GoogleAPIV3(BaseTranslateAPI):
             timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
             if not to_lang:
                 if not detected_lang:
-                    detected_lang = self.detect_language(
-                        simple_random_text_segments(text), timeout=timeout).get('language_code')
+                    detected_lang = self.local_detect_language(
+                        simple_random_text_segments(text)).get('language_code')
                 to_lang = 'en' if 'zh' in detected_lang else 'zh'
 
             google_api_extra_params = kwargs.get('google_api_extra_params', {})
@@ -79,6 +81,19 @@ class GoogleAPIV3(BaseTranslateAPI):
         except Exception as e:
             logging.error(f"Failed to translate text: '{text[:50]}...'. Error: {e}")
             raise RuntimeError(f"Translation failed: '{text[:50]}...'|{e}") from e
+
+    def local_detect_language(self, text, **kwargs) -> dict:
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Text must be a non-empty string.")
+        try:
+            detected_language = detect(text)
+            if detected_language.startswith('zh'):
+                detected_language = 'zh'
+            return {'language_code': detected_language, 'confidence': 1.0}
+        except Exception as e:
+            # Log the exception details here for debugging
+            logging.error(f"Failed to detect language: {e}")
+            raise Exception(f"Failed to detect language: {e}")
 
     def detect_language(self, text, **kwargs) -> dict:
         """

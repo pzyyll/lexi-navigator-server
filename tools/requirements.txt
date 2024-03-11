@@ -21,3 +21,4 @@ gunicorn
 protobuf
 pytest
 pylint
+langdetect
