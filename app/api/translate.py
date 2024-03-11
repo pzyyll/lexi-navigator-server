@@ -9,23 +9,23 @@ from flask import request, make_response, jsonify
 
 
 from app.api import api
-from app.admin.auth_check import jwt_check
+from app.admin.auth_check import token_auth
 from app import limiter
 
 logger = logging.getLogger(__name__)
 
 from app.translate_api import translate_api
 
+
 @api.route('/translate', methods=['POST'])
 @limiter.limit("5 per second")
+@token_auth.login_required
 def handle_translate_request():
     from google.protobuf import json_format
     from common.proto.translate_pb2 import TranslateTextRequest
 
     requestMsg = json_format.ParseDict(request.get_json(), TranslateTextRequest())
     logger.debug("requestMsg: %s", requestMsg)
-    if jwt_check(requestMsg.token, requestMsg.user) is False:
-        return jsonify({'code': HTTPStatus.UNAUTHORIZED, 'msg': 'Token is not valid.'}), HTTPStatus.UNAUTHORIZED
     if not requestMsg.data:
         return jsonify({'code': HTTPStatus.BAD_REQUEST, 'msg': 'Invalid request data.'}), HTTPStatus.BAD_REQUEST
     api_type = requestMsg.data.api_type

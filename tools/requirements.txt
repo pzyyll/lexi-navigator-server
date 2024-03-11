@@ -22,3 +22,4 @@ protobuf
 pytest
 pylint
 langdetect
+Flask-HTTPAuth
