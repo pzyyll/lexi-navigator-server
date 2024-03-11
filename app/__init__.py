@@ -10,7 +10,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_admin import Admin
 from flask_assets import Environment, Bundle
-from flask_cors import CORS
+# from flask_cors import CORS
 
 
 login_manager = LoginManager()
@@ -23,7 +23,7 @@ def create_app(config):
     from app.admin.db import db
 
     app = Flask(__name__)
-    CORS(app)
+    # CORS(app)
 
     if isinstance(config, str):
         app.config.from_pyfile(config)
