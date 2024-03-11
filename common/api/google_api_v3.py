@@ -6,6 +6,7 @@ import six
 import html
 import logging
 import os
+from functools import lru_cache
 
 from langdetect import detect
 
@@ -39,6 +40,7 @@ class GoogleAPIV3(BaseTranslateAPI):
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.auth_key
         os.environ["PROJECT_ID"] = self.project_id
 
+    @lru_cache(maxsize=500)
     def translate_text(self, text, to_lang=None, **kwargs) -> dict:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Text must be a non-empty string.")
@@ -95,6 +97,7 @@ class GoogleAPIV3(BaseTranslateAPI):
             logging.error(f"Failed to detect language: {e}")
             raise Exception(f"Failed to detect language: {e}")
 
+    @lru_cache(maxsize=100)
     def detect_language(self, text, **kwargs) -> dict:
         """
         Detects the language of the given text using an external API.
@@ -132,6 +135,7 @@ class GoogleAPIV3(BaseTranslateAPI):
             logging.error(f"Failed to detect language: {e}")
             raise Exception(f"Failed to detect language: {e}")
 
+    @lru_cache(maxsize=100)
     def list_languages(self, display_language_code=None, **kwargs) -> list:
         try:
             timeout = kwargs.pop('timeout', self.DEFAULT_TIMEOUT)
