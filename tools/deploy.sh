@@ -394,17 +394,20 @@ init() {
     git pull origin main
     # git read-tree -mu HEAD
 
-    # 更新依赖的子模块
-    git submodule init || exit_status 1
-    # 替换掉 ssh 成 https
-    git submodule set-url libs/pyhelper https://github.com/pzyyll/python_common.git
-    git submodule update --recursive || exit_status 1
+    init_submodule
 
     init_pyenv
 
     add_env_to_userfile "PROJECT_DIR_ENV" "$PROJECT_DIR"
 }
 
+init_submodule() {
+    # 更新依赖的子模块
+    git submodule init || exit_status 1
+    # 替换掉 ssh 成 https
+    git submodule set-url libs/pyhelper https://github.com/pzyyll/python_common.git
+    git submodule update --recursive || exit_status 1
+}
 
 init_default_data_path() {
     local_mkdir $DEFAULT_LOG_DIR
@@ -662,16 +665,20 @@ init_socks(){
 
 
 help() {
-    echo "Usage: $0 {init|install-service|uninstall-service|service|up-source|init-pyenv|update|init-nginx-conf|uninstall}"
-    echo "init: Initialize the project directory and install the service."
-    echo "install-service: Install the service."
-    echo "uninstall-service: Uninstall the service."
-    echo "service: Start, stop, restart, or check the status of the service."
-    echo "up-source: Update the project source code."
-    echo "init-pyenv: Initialize the python environment."
-    echo "update: Update the script."
-    echo "init-nginx-conf: Initialize the nginx configuration."
-    echo "uninstall: Uninstall the project."
+    echo "Usage: $0 {init|init-submodule|install-service|uninstall-service|service|up-source|sync|init-pyenv|init-socks|update|init-nginx-conf|uninstall|run-flask}"
+    echo "  init: Initialize the project."
+    echo "  init-submodule: Initialize the submodule."
+    echo "  install-service: Install the systemd service."
+    echo "  uninstall-service: Uninstall the systemd service."
+    echo "  service {start|stop|restart|status|reload}: Control the systemd service."
+    echo "  up-source: Update the project source code."
+    echo "  sync: Update the project source code and restart the service."
+    echo "  init-pyenv: Initialize the python environment."
+    echo "  init-socks: Initialize the socks."
+    echo "  update: Update the script."
+    echo "  init-nginx-conf: Initialize the nginx config."
+    echo "  uninstall: Uninstall the project."
+    echo "  run-flask: Run the flask app."
 }
 
 
@@ -716,6 +723,9 @@ case $1 in
         color_echo "Default db file path: $(color_echo "$DEFAULT_DB_DIR" green)"
         color_echo "Then run $(color_echo "'sudo systemctl start ${PROJECT_NAME}'" red) to start the service."
         ;;
+    "init-submodule")
+        init_submodule
+        ;;
     "install-service")
         init_systemd_service
         ;;
@@ -750,6 +760,12 @@ case $1 in
         ;;
     "uninstall")
         uninstall
+        ;;
+    "run-flask")
+        source $WORK_DIR/.venv/bin/activate
+        export FLASK_ENV=development
+        export FLASK_DEBUG=1
+        flask run
         ;;
     *)
         help
