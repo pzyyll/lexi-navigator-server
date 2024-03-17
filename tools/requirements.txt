@@ -23,3 +23,4 @@ pytest
 pylint
 langdetect
 Flask-HTTPAuth
+openai
